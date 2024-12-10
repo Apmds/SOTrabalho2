@@ -143,6 +143,9 @@ static void arrive(int id)
     }
 
     /* TODO: insert your code here */
+    // Mudar o estado para "a chegar"
+    sh->fSt.st.goalieStat[id] = ARRIVING;
+    saveState(nFic, &(sh->fSt));
     
     if (semUp (semgid, sh->mutex) == -1) {                                                         /* exit critical region */
         perror ("error on the down operation for semaphore access (GL)");
