@@ -180,13 +180,68 @@ static int goalieConstituteTeam (int id)
     }
 
     /* TODO: insert your code here */
+    // Aumentar numeros do guarda redes
+    sh->fSt.goaliesArrived += 1;
+    sh->fSt.goaliesFree += 1;
+
+    // Guardar a equipa antes de qualquer alteração
+    int team_local = sh->fSt.teamId;
+
+    // Definir estado
+    if (sh->fSt.goaliesArrived > NUMTEAMGOALIES*2) {
+        sh->fSt.st.goalieStat[id] = LATE;
+    } else if (sh->fSt.playersFree >= NUMTEAMPLAYERS && sh->fSt.goaliesFree >= NUMTEAMGOALIES) {
+        sh->fSt.st.goalieStat[id] = FORMING_TEAM;
+        sh->fSt.teamId++;
+    } else {
+        sh->fSt.st.goalieStat[id] = WAITING_TEAM;
+    }
+    saveState(nFic, &(sh->fSt));
     
+    char state_local = sh->fSt.st.goalieStat[id];
+
     if (semUp (semgid, sh->mutex) == -1) {                                                         /* exit critical region */
         perror ("error on the down operation for semaphore access (GL)");
         exit (EXIT_FAILURE);
     }
 
     /* TODO: insert your code here */
+    switch (state_local) {
+    case WAITING_TEAM:
+        // Fica na equipa
+        ret = team_local;
+        if (semDown(semgid, sh->goaliesWaitTeam) == -1) {
+            perror("error on the down operation for semaphore access (GL)");
+            exit(EXIT_FAILURE);
+        }
+
+
+        break;
+    case FORMING_TEAM:
+        // Fica na equipa
+        ret = team_local;
+
+        // Levanta o semáforo dos players
+        for (int i = 0; i < NUMTEAMPLAYERS; i++) {
+            if (semUp(semgid, sh->playersWaitTeam) == -1) {
+                perror("error on the down operation for semaphore access (GL)");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        // Levanta o semáforo dos guarda-redes
+        for (int i = 0; i < NUMTEAMGOALIES-1; i++) {
+            if (semUp(semgid, sh->goaliesWaitTeam) == -1) {
+                perror("error on the down operation for semaphore access (GL)");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        break;
+    default: // Atrasado
+        ret = 0;
+        break;
+    }
 
     return ret;
 }
@@ -208,6 +263,18 @@ static void waitReferee (int id, int team)
     }
 
     /* TODO: insert your code here */
+    // Já não está livre
+    sh->fSt.goaliesFree--;
+    // Mudar o estado baseado na equipa
+    if (team == 1) {
+        sh->fSt.st.goalieStat[id] = WAITING_START_1;
+        saveState(nFic, &(sh->fSt));
+    }
+    if (team == 2) {
+        sh->fSt.st.goalieStat[id] = WAITING_START_2;
+        saveState(nFic, &(sh->fSt));
+    }
+    
 
     if (semUp (semgid, sh->mutex) == -1) {                                                         /* exit critical region */
         perror ("error on the down operation for semaphore access (GL)");
@@ -215,7 +282,11 @@ static void waitReferee (int id, int team)
     }
 
     /* TODO: insert your code here */
-
+    // Esperar pelo árbitro
+    if (semDown (semgid, sh->playersWaitReferee) == -1)  {
+        perror ("error on the up operation for semaphore access (GL)");
+        exit (EXIT_FAILURE);
+    }
 }
 
 /**
@@ -235,6 +306,15 @@ static void playUntilEnd (int id, int team)
     }
 
     /* TODO: insert your code here */
+    // Mudar o estado baseado na equipa
+    if (team == 1) {
+        sh->fSt.st.goalieStat[id] = PLAYING_1;
+        saveState(nFic, &(sh->fSt));
+    }
+    if (team == 2) {
+        sh->fSt.st.goalieStat[id] = PLAYING_2;
+        saveState(nFic, &(sh->fSt));
+    }
 
     if (semUp (semgid, sh->mutex) == -1) {                                                         /* exit critical region */
         perror ("error on the down operation for semaphore access (GL)");
@@ -242,6 +322,10 @@ static void playUntilEnd (int id, int team)
     }
 
     /* TODO: insert your code here */
-    
+    // Esperar pelo árbitro
+    if (semDown (semgid, sh->playersWaitEnd) == -1)  {
+        perror ("error on the up operation for semaphore access (GL)");
+        exit (EXIT_FAILURE);
+    }
 }
 
