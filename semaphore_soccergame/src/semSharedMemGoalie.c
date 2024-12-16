@@ -186,7 +186,6 @@ static int goalieConstituteTeam (int id)
     sh->fSt.goaliesFree += 1;
 
     // Guardar a equipa antes de qualquer alteração
-    // TODO: VER PROBLEMA DA EQUIPA
     int team_local = sh->fSt.teamId;
 
     // Definir estado
@@ -211,7 +210,6 @@ static int goalieConstituteTeam (int id)
     switch (state_local) {
     case WAITING_TEAM:
         // Fica na equipa
-        ret = team_local;
         printf("[%d]: Está à espera\n", id);
         if (semDown(semgid, sh->goaliesWaitTeam) == -1) {
             perror("error on the down operation for semaphore access (GL)");
@@ -222,6 +220,21 @@ static int goalieConstituteTeam (int id)
             perror("error on the down operation for semaphore access (GL)");
             exit(EXIT_FAILURE);
         }
+
+        // Obter valor atual da equipa
+        if (semDown (semgid, sh->mutex) == -1)  {                                                     /* enter critical region */
+            perror ("error on the up operation for semaphore access (GL)");
+            exit (EXIT_FAILURE);
+        }
+
+        team_local = sh->fSt.teamId - 1; // Diminuir 1 porque a pessoa que formou já adicionou 1
+
+        if (semUp (semgid, sh->mutex) == -1) {                                                         /* exit critical region */
+            perror ("error on the down operation for semaphore access (GL)");
+            exit (EXIT_FAILURE);
+        }
+
+        ret = team_local;
         printf("[%d]: Acknowledged para a equipa %d\n", id, ret);
 
         break;
