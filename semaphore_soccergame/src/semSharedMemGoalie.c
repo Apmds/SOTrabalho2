@@ -125,6 +125,7 @@ int main (int argc, char *argv[])
         return EXIT_FAILURE;;
     }
 
+    printf("[%d]: acabou tudo\n", n);
     return EXIT_SUCCESS;
 }
 
@@ -185,6 +186,7 @@ static int goalieConstituteTeam (int id)
     sh->fSt.goaliesFree += 1;
 
     // Guardar a equipa antes de qualquer alteração
+    // TODO: VER PROBLEMA DA EQUIPA
     int team_local = sh->fSt.teamId;
 
     // Definir estado
@@ -210,11 +212,17 @@ static int goalieConstituteTeam (int id)
     case WAITING_TEAM:
         // Fica na equipa
         ret = team_local;
+        printf("[%d]: Está à espera\n", id);
         if (semDown(semgid, sh->goaliesWaitTeam) == -1) {
             perror("error on the down operation for semaphore access (GL)");
             exit(EXIT_FAILURE);
         }
-
+        printf("[%d]: Acabou de esperar\n", id);
+        if (semUp(semgid, sh->playerRegistered) == -1) {
+            perror("error on the down operation for semaphore access (GL)");
+            exit(EXIT_FAILURE);
+        }
+        printf("[%d]: Acknowledged para a equipa %d\n", id, ret);
 
         break;
     case FORMING_TEAM:
@@ -243,6 +251,7 @@ static int goalieConstituteTeam (int id)
         break;
     }
 
+    printf("[%d]: Ficou na equipa %d\n", id, ret);
     return ret;
 }
 
@@ -262,6 +271,7 @@ static void waitReferee (int id, int team)
         exit (EXIT_FAILURE);
     }
 
+    printf("[%d, %d] Está à espera\n", id, team);
     /* TODO: insert your code here */
     // Já não está livre
     sh->fSt.goaliesFree--;
