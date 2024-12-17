@@ -185,7 +185,7 @@ static int playerConstituteTeam (int id)
 
     /* TODO: insert your code here */
 
-    // este jogador chegou e está livre para formar equipa
+    // O jogador chegou e está livre para formar equipa
     sh->fSt.playersArrived++;
     sh->fSt.playersFree++;
     
@@ -210,13 +210,63 @@ static int playerConstituteTeam (int id)
     switch (sh->fSt.st.playerStat[id])
     {
     case WAITING_TEAM:
-        
+
+        // espera por outros players para formar equipa
+        if (semDown (semgid, sh->playersWaitTeam) == -1) {     
+            perror ("error on the down operation for semaphore access (PL)");
+            exit (EXIT_FAILURE);
+        }
+
+        if (semUp(semgid, sh->playerRegistered) == -1) {
+            perror ("error on the down operation for semaphore access (PL)");
+            exit (EXIT_FAILURE);
+        }
 
 
         break;
     case FORMING_TEAM:
+
+        if (semDown (semgid, sh->mutex) == -1)  {                                                     /* enter critical region */
+           perror ("error on the up operation for semaphore access (PL)");
+            exit (EXIT_FAILURE);
+        }
+
+            // Id atual da equipa
+            ret = sh->fSt.teamId;
+
+            // alterar para o próximo Id
+            sh->fSt.teamId = (sh->fSt.teamId == 1) ? 2 : 1;
+
+            // como vai formar uma equipa, os elementos que fazem parte dess equipa 
+            // já não estão disponíveis
+            sh->fSt.playersFree -= NUMTEAMPLAYERS;
+            sh->fSt.goaliesFree -= NUMTEAMGOALIES;
+
+
+        if (semUp (semgid, sh->mutex) == -1) {                                                         /* exit critical region */
+            perror ("error on the down operation for semaphore access (PL)");
+            exit (EXIT_FAILURE);
+        }
+
+
+        // "acorda" os players necessários para formar equipa com eles
+        for (int i = 0 ; i < NUMTEAMPLAYERS - 1; i++) {
+            if (semUp(semgid, sh->playersWaitTeam) == -1) {
+                perror ("error on the down operation for semaphore access (PL)");
+                exit (EXIT_FAILURE);
+            }
+        }
+
+        // "acorda" um golie para formar equipa
+        if (semUp(semgid, sh->goaliesWaitTeam) == -1) {
+            perror ("error on the down operation for semaphore access (PL)");
+            exit (EXIT_FAILURE);
+        }
+
     
     default:
+        // late player
+        ret = 0;
         break;
     }
 
