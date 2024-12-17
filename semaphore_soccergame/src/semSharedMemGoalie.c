@@ -238,7 +238,7 @@ static int goalieConstituteTeam (int id)
         printf("[%d]: Acknowledged para a equipa %d\n", id, ret);
 
         break;
-    case FORMING_TEAM:
+    case FORMING_TEAM: // Ficar à espera do acknowledge
         // Fica na equipa
         ret = team_local;
 
@@ -306,10 +306,16 @@ static void waitReferee (int id, int team)
 
     /* TODO: insert your code here */
     // Esperar pelo árbitro
+    printf("[%d, %d]: À espera do árbitro\n", id, team);
+    if (semUp (semgid, sh->playing) == -1)  {
+        perror ("error on the up operation for semaphore access (GL)");
+        exit (EXIT_FAILURE);
+    }
     if (semDown (semgid, sh->playersWaitReferee) == -1)  {
         perror ("error on the up operation for semaphore access (GL)");
         exit (EXIT_FAILURE);
     }
+    printf("[%d, %d]: Acabou de esperar pelo árbitro\n", id, team);
 }
 
 /**
@@ -332,12 +338,11 @@ static void playUntilEnd (int id, int team)
     // Mudar o estado baseado na equipa
     if (team == 1) {
         sh->fSt.st.goalieStat[id] = PLAYING_1;
-        saveState(nFic, &(sh->fSt));
     }
     if (team == 2) {
         sh->fSt.st.goalieStat[id] = PLAYING_2;
-        saveState(nFic, &(sh->fSt));
     }
+    saveState(nFic, &(sh->fSt));
 
     if (semUp (semgid, sh->mutex) == -1) {                                                         /* exit critical region */
         perror ("error on the down operation for semaphore access (GL)");
@@ -346,6 +351,7 @@ static void playUntilEnd (int id, int team)
 
     /* TODO: insert your code here */
     // Esperar pelo árbitro
+    printf("[%d, %d]: À espera do fim\n", id, team);
     if (semDown (semgid, sh->playersWaitEnd) == -1)  {
         perror ("error on the up operation for semaphore access (GL)");
         exit (EXIT_FAILURE);
