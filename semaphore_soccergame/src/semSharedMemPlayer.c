@@ -237,11 +237,6 @@ static int playerConstituteTeam (int id)
             // alterar para o próximo Id
             sh->fSt.teamId = (sh->fSt.teamId == 1) ? 2 : 1;
 
-            // como vai formar uma equipa, os elementos que fazem parte dess equipa 
-            // já não estão disponíveis
-            sh->fSt.playersFree -= NUMTEAMPLAYERS;
-            sh->fSt.goaliesFree -= NUMTEAMGOALIES;
-
 
         if (semUp (semgid, sh->mutex) == -1) {                                                         /* exit critical region */
             perror ("error on the down operation for semaphore access (PL)");
@@ -291,12 +286,31 @@ static void waitReferee (int id, int team)
 
     /* TODO: insert your code here */
 
+    // O player deixa de estar livre
+    sh->fSt.playersFree--;
+
+    if (team == 1) {
+        sh->fSt.st.playerStat[id] = WAITING_START_1;
+        saveState(nFic, &(sh->fSt));
+    }
+    if (team == 2) {
+        sh->fSt.st.playerStat[id] = WAITING_START_2;
+        saveState(nFic, &(sh->fSt));
+    }
+
+
     if (semUp (semgid, sh->mutex) == -1) {                                                         /* exit critical region */
         perror ("error on the down operation for semaphore access (PL)");
         exit (EXIT_FAILURE);
     }
 
     /* TODO: insert your code here */
+
+    // Espera pelo árbitro
+    if (semDown (semgid, sh->playersWaitReferee) == -1)  {
+        perror ("error on the up operation for semaphore access (GL)");
+        exit (EXIT_FAILURE);
+    }
 
 }
 
@@ -317,6 +331,14 @@ static void playUntilEnd (int id, int team)
     }
 
     /* TODO: insert your code here */
+    if (team == 1) {
+        sh->fSt.st.playerStat[id] = PLAYING_1;
+        saveState(nFic, &(sh->fSt));
+    }
+    if (team == 2) {
+        sh->fSt.st.playerStat[id] = PLAYING_2;
+        saveState(nFic, &(sh->fSt));
+    }
 
     if (semUp (semgid, sh->mutex) == -1) {                                                         /* exit critical region */
         perror ("error on the down operation for semaphore access (PL)");
@@ -324,6 +346,11 @@ static void playUntilEnd (int id, int team)
     }
 
     /* TODO: insert your code here */
+    // player espera pelo fim do jogo dado pelo árbitro
+    if (semDown (semgid, sh->playersWaitEnd) == -1)  {   
+        perror ("error on the up operation for semaphore access (PL)");
+        exit (EXIT_FAILURE);
+    }
 
 }
 
