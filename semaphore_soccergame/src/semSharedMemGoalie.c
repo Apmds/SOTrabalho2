@@ -153,7 +153,7 @@ static void arrive(int id)
         exit (EXIT_FAILURE);
     }
 
-    usleep((200.0*random())/(RAND_MAX+1.0)+60.0);
+    usleep((2083120.0*random())/(RAND_MAX+1.0)+321930.0);
 }
 
 /**
@@ -193,7 +193,7 @@ static int goalieConstituteTeam (int id)
         sh->fSt.st.goalieStat[id] = LATE;
     } else if (sh->fSt.playersFree >= NUMTEAMPLAYERS && sh->fSt.goaliesFree >= NUMTEAMGOALIES) {
         sh->fSt.st.goalieStat[id] = FORMING_TEAM;
-        sh->fSt.teamId++;
+        //sh->fSt.teamId++;
     } else {
         sh->fSt.st.goalieStat[id] = WAITING_TEAM;
     }
@@ -221,18 +221,18 @@ static int goalieConstituteTeam (int id)
             exit(EXIT_FAILURE);
         }
 
-        // Obter valor atual da equipa
-        if (semDown (semgid, sh->mutex) == -1)  {                                                     /* enter critical region */
-            perror ("error on the up operation for semaphore access (GL)");
-            exit (EXIT_FAILURE);
-        }
-
-        team_local = sh->fSt.teamId - 1; // Diminuir 1 porque a pessoa que formou já adicionou 1
-
-        if (semUp (semgid, sh->mutex) == -1) {                                                         /* exit critical region */
-            perror ("error on the down operation for semaphore access (GL)");
-            exit (EXIT_FAILURE);
-        }
+        //// Obter valor atual da equipa
+        //if (semDown (semgid, sh->mutex) == -1)  {                                                     /* enter critical region */
+        //    perror ("error on the up operation for semaphore access (GL)");
+        //    exit (EXIT_FAILURE);
+        //}
+        //
+        //team_local = sh->fSt.teamId - 1; // Diminuir 1 porque a pessoa que formou já adicionou 1
+        //
+        //if (semUp (semgid, sh->mutex) == -1) {                                                         /* exit critical region */
+        //    perror ("error on the down operation for semaphore access (GL)");
+        //    exit (EXIT_FAILURE);
+        //}
 
         ret = team_local;
         printf("[%d]: Acknowledged para a equipa %d\n", id, ret);
@@ -240,11 +240,15 @@ static int goalieConstituteTeam (int id)
         break;
     case FORMING_TEAM: // Ficar à espera do acknowledge
         // Fica na equipa
-        ret = team_local;
 
         // Levanta o semáforo dos players
         for (int i = 0; i < NUMTEAMPLAYERS; i++) {
             if (semUp(semgid, sh->playersWaitTeam) == -1) {
+                perror("error on the down operation for semaphore access (GL)");
+                exit(EXIT_FAILURE);
+            }
+
+            if (semDown(semgid, sh->playerRegistered) == -1) {
                 perror("error on the down operation for semaphore access (GL)");
                 exit(EXIT_FAILURE);
             }
@@ -256,8 +260,25 @@ static int goalieConstituteTeam (int id)
                 perror("error on the down operation for semaphore access (GL)");
                 exit(EXIT_FAILURE);
             }
+
+            if (semDown(semgid, sh->playerRegistered) == -1) {
+                perror("error on the down operation for semaphore access (GL)");
+                exit(EXIT_FAILURE);
+            }
         }
 
+        // Obter valor atual da equipa
+        if (semDown (semgid, sh->mutex) == -1)  {                                                     /* enter critical region */
+            perror ("error on the up operation for semaphore access (GL)");
+            exit (EXIT_FAILURE);
+        }
+        
+        sh->fSt.teamId++;
+        
+        if (semUp (semgid, sh->mutex) == -1) {                                                         /* exit critical region */
+            perror ("error on the down operation for semaphore access (GL)");
+            exit (EXIT_FAILURE);
+        }
         break;
     default: // Atrasado
         ret = 0;
