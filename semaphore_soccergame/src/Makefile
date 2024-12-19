@@ -10,12 +10,15 @@ MAIN      = probSemSharedMemSoccerGame
 
 OBJS = sharedMemory.o semaphore.o logging.o
 
-.PHONY: all pl gl rf all_bin clean cleanall
+.PHONY: all pl gl rf pl_bin gl_bin rf_bin all_bin clean cleanall
 
 all:     clean  player      goalie       referee      main  
 pl:	     clean  player      goalie_bin   referee_bin  main 
 gl:	     clean  player_bin  goalie       referee_bin  main
 rf:	     clean  player_bin  goalie_bin   referee      main 
+pl_bin:	 clean  player_bin  goalie       referee      main 
+gl_bin:	 clean  player      goalie_bin   referee      main
+rf_bin:	 clean  player      goalie       referee_bin  main 
 all_bin: clean  player_bin  goalie_bin   referee_bin  main 
 
 player:	 $(PLAYER).o $(OBJS)

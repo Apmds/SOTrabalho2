@@ -197,6 +197,8 @@ static int playerConstituteTeam (int id)
     } else {
         sh->fSt.st.playerStat[id] = WAITING_TEAM;
     }
+
+    char state_local = sh->fSt.st.playerStat[id];
     saveState(nFic, &(sh->fSt));
 
 
@@ -207,8 +209,8 @@ static int playerConstituteTeam (int id)
 
     /* TODO: insert your code here */
 
-    switch (sh->fSt.st.playerStat[id])
-    {
+    switch (state_local) {
+    
     case WAITING_TEAM:
 
         // espera por outros players para formar equipa
@@ -233,10 +235,11 @@ static int playerConstituteTeam (int id)
 
             // Id atual da equipa
             ret = sh->fSt.teamId;
-
             // alterar para o próximo Id
-            sh->fSt.teamId = (sh->fSt.teamId == 1) ? 2 : 1;
+            sh->fSt.teamId++;
 
+            sh->fSt.goaliesFree -= NUMTEAMGOALIES;
+            sh->fSt.playersFree -= NUMTEAMPLAYERS;
 
         if (semUp (semgid, sh->mutex) == -1) {                                                         /* exit critical region */
             perror ("error on the down operation for semaphore access (PL)");
@@ -252,10 +255,12 @@ static int playerConstituteTeam (int id)
             }
         }
 
-        // "acorda" um golie para formar equipa
-        if (semUp(semgid, sh->goaliesWaitTeam) == -1) {
-            perror ("error on the down operation for semaphore access (PL)");
-            exit (EXIT_FAILURE);
+        // "acorda" os golies para formar equipa
+        for (int i = 0; i < NUMTEAMGOALIES; i++) {
+            if (semUp(semgid, sh->goaliesWaitTeam) == -1) {
+                perror ("error on the down operation for semaphore access (PL)");
+                exit (EXIT_FAILURE);
+            }
         }
 
     
