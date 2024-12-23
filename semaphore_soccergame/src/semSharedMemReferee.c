@@ -220,14 +220,18 @@ static void startGame ()
         }
     }
 
-    printf("Ref: À espera de playing\n");
+    if (getenv("DEBUG_PROJ_SO") != NULL) {
+        printf("Ref: À espera de playing\n");
+    }
     for (int i = 0; i < (NUMTEAMPLAYERS*2 + NUMTEAMGOALIES*2); i++){
         if (semDown (semgid, sh->playing) == -1) {
             perror ("error on the up operation for semaphore access (RF)");
             exit (EXIT_FAILURE);
         }
     }
-    printf("Ref: Acabou a espera por playing\n");
+    if (getenv("DEBUG_PROJ_SO") != NULL) {
+        printf("Ref: Acabou a espera por playing\n");
+    }
 }
 
 /**
@@ -286,7 +290,9 @@ static void endGame ()
     }
 
     // Avisar todos de que o jogo já acabou
-    printf("Ref: A avisar os outros que acabou.\n");
+    if (getenv("DEBUG_PROJ_SO") != NULL) {
+        printf("Ref: A avisar os outros que acabou.\n");
+    }
     for (int i = 0; i < (NUMTEAMPLAYERS*2 + NUMTEAMGOALIES*2); i++) {
         if (semUp (semgid, sh->playersWaitEnd) == -1) {                                                        /* leave critical region */
             perror ("error on the up operation for semaphore access (RF)");
