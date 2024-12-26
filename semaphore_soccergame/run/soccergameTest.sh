@@ -22,7 +22,7 @@ function result {
 
 
 
-# Avaliamos se o referre passa para S apenas quando todos os elementos das equipas estão a s ou S
+# Avaliamos se o referee passa para S apenas quando todos os elementos das equipas estão a s ou S
 function testRefereeStartingGame {
     echo
     echo "=== Testing Referee Starting Game ==="
