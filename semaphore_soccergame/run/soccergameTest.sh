@@ -2,37 +2,12 @@
 
 # É necessário ter o executado o comando "make all" previamente
 # Argumento opcional com o número de vezes que se pretendem executar os testes
-
-function parseArgs {
-    keepResultsFile=0
-    numRuns=1
-
-    while getopts ":f" opt; do
-        case $opt in
-            f)
-                keepResultsFile=1
-                ;;
-            \?)
-                echo "Opção inválida: -$OPTARG" >&2
-                exit 1
-                ;;
-        esac
-    done
-
-    shift $((OPTIND - 1))
-    if [[ "$1" =~ ^[0-9]+$ ]]; then
-        numRuns="$1"
-    fi
-
-}
-
+# Em cado de erro, o ficheiros resultsFile.txt não é apagado
 
 function clean {
-    if [[ "$keepResultsFile" -eq 0 ]]; then
-        for file in "$@"; do
-            rm "$file"
-        done
-    fi
+    for file in "$@"; do
+        rm "$file"
+    done
 }
 
 
@@ -232,7 +207,7 @@ function summaryOfTests() {
 
 function main {
 
-    parseArgs "$@"
+    numRuns="$1"
     overallPass=0
     overallFail=0
 
@@ -253,7 +228,6 @@ function main {
 
         summaryOfTests
 
-        clean "$FILE"
         overallPass=$((overallPass + $SUCCESS_TESTS))
         overallFail=$((overallFail + $FAILURE_TESTS))
 
@@ -262,6 +236,7 @@ function main {
             break
         fi
     done
+    [[ "$FAILURE_TESTS" -eq 0 ]] && { clean "$FILE"; }
 
     echo
     echo "=== OVERALL SUMMARY ==="
