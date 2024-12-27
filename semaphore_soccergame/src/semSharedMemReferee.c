@@ -294,7 +294,7 @@ static void endGame ()
         printf("Ref: A avisar os outros que acabou.\n");
     }
     for (int i = 0; i < (NUMTEAMPLAYERS*2 + NUMTEAMGOALIES*2); i++) {
-        if (semUp (semgid, sh->playersWaitEnd) == -1) {                                                        /* leave critical region */
+        if (semUp (semgid, sh->playersWaitEnd) == -1) {                                                       
             perror ("error on the up operation for semaphore access (RF)");
             exit (EXIT_FAILURE);
         }

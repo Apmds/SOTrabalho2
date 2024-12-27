@@ -3,10 +3,6 @@
 # É necessário ter o executado o comando "make all" previamente
 # Argumento opcional com o número de vezes que se pretendem executar os testes
 
-TOTAL_TESTS=0
-SUCCESS_TESTS=0
-FAILURE_TESTS=0
-
 function clean {
     for file in "$@"; do
         rm "$file"
@@ -21,8 +17,7 @@ function result {
 }
 
 
-
-# Avaliamos se o referee passa para S apenas quando todos os elementos das equipas estão a s ou S
+# Avalia se o referee passa para S apenas quando todos os elementos das equipas estão a s ou S
 function testRefereeStartingGame {
     echo
     echo "=== Testing Referee Starting Game ==="
@@ -62,7 +57,8 @@ function testRefereeStartingGame {
     echo
 }
 
-# Avaliamos se o referee passa a R apenas quando todos os elementos das equipas estão a p ou P
+# Avalia se o referee passa a R apenas quando todos os elementos das equipas estão a p ou P
+# Verifica se R aparece apenas uma vez
 function testRefereeing {
     echo
     echo "=== Testing Refereeing ==="
@@ -70,12 +66,15 @@ function testRefereeing {
 
     previousLine=""
     currentLine=""
+    count_R=0
+    check=1
     ./probSemSharedMemSoccerGame > "resultFile.txt"
     while read -r line; do
         currentLine="$line"
 
         # Verificar se o último caracter da linha é R
         if [[ "${currentLine: -1}" == "R" ]]; then
+            ((count_R++))
 
             # Verificar se a linha anterior tem 5 p's e 5 P's
             num_p=$(echo "$previousLine" | grep -o "p" | wc -l)
@@ -85,12 +84,12 @@ function testRefereeing {
                 echo "OK: Referee starts refereeing with:"
                 echo "$num_p players/golies of team 1 playing"
                 echo "$num_P players/golies of team 2 playing"
-                result 0
+                check=0
             else
                 echo "ERROR: Referee starts refereeing with:"
                 echo "$num_p players/golies of team 1 playing"
                 echo "$num_P players/golies of team 2 playing"
-                result 1
+                check=1
             fi
             break
         fi
@@ -98,12 +97,79 @@ function testRefereeing {
         previousLine="$currentLine"
     done < "resultFile.txt"
 
+    if [[ "$count_R" -eq 1 ]]; then
+        echo "OK: R appears only once."
+    else
+        echo "ERROR: R appears more than once"
+    fi
+
+    if [[ "$count_R" -eq 1 && "$check" -eq 0 ]]; then
+        result 0
+    else
+        result 1
+    fi
     clean "resultFile.txt"
     echo
 }
 
 
-# Verificamos o número de elementos a p, P, L e E
+# Verifica a passagem para o estado F dos players/goalies
+function testFormingTeam {
+    echo
+    echo "=== Testing Transition to State F ==="
+    echo
+
+    ./probSemSharedMemSoccerGame > "resultFile.txt"
+
+    previousLine=""
+    currentLine=""
+    lineNumber=0
+    success=0
+    failure=0
+    numTransitions=0
+
+    while read -r line; do
+        ((lineNumber++))
+
+        if [[ "$lineNumber" -eq 1 ]]; then
+            previousLine="$line"
+            continue
+        fi
+
+        # Verificar cada posição na linha atual comparando com a anterior
+        for ((i = 0; i < ${#line}; i++)); do
+            currentChar="${line:$i:1}"
+            previousChar="${previousLine:$i:1}"
+
+            # Detectar transição para F
+            if [[ "$currentChar" == "F" && "$previousChar" == "A" ]]; then
+                echo "> Transition to F detected at line $lineNumber."
+                ((numTransitions++))
+                # Validar condições para formar a equipa
+                num_W=$(echo "$line" | grep -o "W" | wc -l)
+                if [[ "$num_W" -ge 4 ]]; then
+                    echo "OK: Enough players in W to form a team."
+                    ((success++))
+                else
+                    echo "ERROR: Not enough players in W to form a team."
+                    ((failure++))
+                fi
+            fi
+        done
+
+        previousLine="$line"
+    done < "resultFile.txt"
+    echo "Total transitions to F: $numTransitions."
+    if [[ "$failure" -eq 0 && "$numTransitions" -eq 2 ]]; then
+        result 0
+    else
+        result 1
+    fi
+    clean "resultFile.txt"
+}
+
+
+# Verifica o número de elementos a p, P, L e E
 function checkFinalResult {
     echo
     echo "=== Testing Final Result ==="
@@ -139,22 +205,46 @@ function checkFinalResult {
 
 function summaryOfTests() {
     echo
-    echo "---- SUMMARY OF TESTS PERFORMED ----"
+    echo "---- Summary of test performed ----"
     echo
-    echo "NUMBER OF TESTS PERFORMED: $TOTAL_TESTS"
-    echo "NUMBER OF SUCCESSFUL TESTS: $SUCCESS_TESTS"
-    echo "NUMBER OF FAILED TESTS: $FAILURE_TESTS"
+    echo "Number of tests performed: $TOTAL_TESTS"
+    echo "Number of successful tests: $SUCCESS_TESTS"
+    echo "Number of failed tests: $FAILURE_TESTS"
     echo
 }
 
 function main {
 
-    testRefereeStartingGame
-    testRefereeing # TESTAR O INÍCIO DA ARBITRAGEM
-    checkFinalResult # TESTAR O FINAL DO JOGO
+    numRuns=${1:-1}
+    overallPass=0
+    overallFail=0
 
-    summaryOfTests
+    for ((run = 1; run <= numRuns; run++)); do
+        echo
+        echo " >> RUN $run"
+        TOTAL_TESTS=0
+        SUCCESS_TESTS=0
+        FAILURE_TESTS=0
+
+        testRefereeStartingGame # TESTAR A PASSAGEM PARA O ESTADO S DO REFEREE
+        testRefereeing # TESTAR O INÍCIO DA ARBITRAGEM
+        checkFinalResult # TESTAR O FINAL DO JOGO
+        testFormingTeam # TESTAR A TRANSIÇÃO PARA O ESTADO F DE PLAYERS/GOALIES
+
+        summaryOfTests
+
+
+        overallPass=$((overallPass + $TOTAL_TESTS - $FAILURE_TESTS))
+        overallFail=$((overallFail + $FAILURE_TESTS))
+    done
+
+    echo
+    echo "=== OVERALL SUMMARY ==="
+    echo "TOTAL RUNS: $numRuns"
+    echo "TOTAL TESTS PASSED: $overallPass"
+    echo "TOTAL TESTS FAILED: $overallFail"
+
 }
 
 
-main
+main "$@"
