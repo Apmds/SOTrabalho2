@@ -235,6 +235,11 @@ function main {
 
         overallPass=$((overallPass + $TOTAL_TESTS - $FAILURE_TESTS))
         overallFail=$((overallFail + $FAILURE_TESTS))
+
+        if [[ "$FAILURE_TESTS" -gt 0 ]]; then
+            echo "AN ERROR OCCURRED"
+            break
+        fi
     done
 
     echo
