@@ -141,7 +141,6 @@ function testFormingTeam {
             currentChar="${line:$i:1}"
             previousChar="${previousLine:$i:1}"
 
-            # Detectar transição para F
             if [[ "$currentChar" == "F" && "$previousChar" == "A" ]]; then
                 echo "> Transition to F detected at line $lineNumber."
                 ((numTransitions++))
