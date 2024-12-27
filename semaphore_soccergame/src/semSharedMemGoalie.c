@@ -261,11 +261,6 @@ static int goalieConstituteTeam (int id)
 
         break;
     case FORMING_TEAM:
-        // Avisar o árbitro que a equipa está formada
-        if (semUp (semgid, sh->refereeWaitTeams) == -1) {
-            perror ("error on the down operation for semaphore access (GL)");
-            exit (EXIT_FAILURE);
-        }
         break;
     default: // Atrasado
         ret = 0;
@@ -298,6 +293,15 @@ static void waitReferee (int id, int team)
         printf("[%d, %d](Gl): Está à espera\n", id, team);
     }
     /* TODO: insert your code here */
+
+    // Avisar o árbitro que a equipa está formada
+    if (sh->fSt.st.goalieStat[id] == FORMING_TEAM) {
+        if (semUp (semgid, sh->refereeWaitTeams) == -1) {
+            perror ("error on the down operation for semaphore access (GL)");
+            exit (EXIT_FAILURE);
+        }
+    }
+
     // Já não está livre
     // Mudar o estado baseado na equipa
     if (team == 1) {
