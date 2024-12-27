@@ -3,10 +3,36 @@
 # É necessário ter o executado o comando "make all" previamente
 # Argumento opcional com o número de vezes que se pretendem executar os testes
 
-function clean {
-    for file in "$@"; do
-        rm "$file"
+function parseArgs {
+    keepResultsFile=0
+    numRuns=1
+
+    while getopts ":f" opt; do
+        case $opt in
+            f)
+                keepResultsFile=1
+                ;;
+            \?)
+                echo "Opção inválida: -$OPTARG" >&2
+                exit 1
+                ;;
+        esac
     done
+
+    shift $((OPTIND - 1))
+    if [[ "$1" =~ ^[0-9]+$ ]]; then
+        numRuns="$1"
+    fi
+
+}
+
+
+function clean {
+    if [[ "$keepResultsFile" -eq 0 ]]; then
+        for file in "$@"; do
+            rm "$file"
+        done
+    fi
 }
 
 
@@ -25,7 +51,6 @@ function testRefereeStartingGame {
 
     previousLine=""
     currentLine=""
-    ./probSemSharedMemSoccerGame > "resultFile.txt"
     while read -r line; do
         currentLine="$line"
 
@@ -51,9 +76,8 @@ function testRefereeStartingGame {
         fi
 
         previousLine="$currentLine"
-    done < "resultFile.txt"
+    done < "$FILE"
 
-    clean "resultFile.txt"
     echo
 }
 
@@ -68,7 +92,6 @@ function testRefereeing {
     currentLine=""
     count_R=0
     check=1
-    ./probSemSharedMemSoccerGame > "resultFile.txt"
     while read -r line; do
         currentLine="$line"
 
@@ -95,7 +118,7 @@ function testRefereeing {
         fi
 
         previousLine="$currentLine"
-    done < "resultFile.txt"
+    done < "$FILE"
 
     if [[ "$count_R" -eq 1 ]]; then
         echo "OK: R appears only once."
@@ -108,7 +131,6 @@ function testRefereeing {
     else
         result 1
     fi
-    clean "resultFile.txt"
     echo
 }
 
@@ -118,8 +140,6 @@ function testFormingTeam {
     echo
     echo "=== Testing Transition to State F ==="
     echo
-
-    ./probSemSharedMemSoccerGame > "resultFile.txt"
 
     previousLine=""
     currentLine=""
@@ -157,14 +177,13 @@ function testFormingTeam {
         done
 
         previousLine="$line"
-    done < "resultFile.txt"
+    done < "$FILE"
     echo "Total transitions to F: $numTransitions."
     if [[ "$failure" -eq 0 && "$numTransitions" -eq 2 ]]; then
         result 0
     else
         result 1
     fi
-    clean "resultFile.txt"
 }
 
 
@@ -174,13 +193,13 @@ function checkFinalResult {
     echo "=== Testing Final Result ==="
     echo
 
-    ./probSemSharedMemSoccerGame > "resultFile.txt"
-    if [[ ! -s "resultFile.txt" ]]; then
+    
+    if [[ ! -s "$FILE" ]]; then
         echo "Error: resultFile.txt is empty or not generated correctly"
         ((failure++))
         continue
     fi
-    lastLine=$(tail -n 1 resultFile.txt)
+    lastLine=$(tail -n 1 "$FILE")
     num_p=$(echo "$lastLine" | grep -o "p" | wc -l) # team 1    
     num_P=$(echo "$lastLine" | grep -o "P" | wc -l) # team 2
     num_E=$(echo "$lastLine" | grep -o "E" | wc -l) # ending game   
@@ -197,7 +216,6 @@ function checkFinalResult {
         result 1
     fi
 
-    clean "resultFile.txt"
     echo
 }
 
@@ -214,7 +232,7 @@ function summaryOfTests() {
 
 function main {
 
-    numRuns=${1:-1}
+    parseArgs "$@"
     overallPass=0
     overallFail=0
 
@@ -224,6 +242,9 @@ function main {
         TOTAL_TESTS=0
         SUCCESS_TESTS=0
         FAILURE_TESTS=0
+        FILE="resultsFile.txt"
+
+        ./probSemSharedMemSoccerGame > "$FILE"
 
         testRefereeStartingGame # TESTAR A PASSAGEM PARA O ESTADO S DO REFEREE
         testRefereeing # TESTAR O INÍCIO DA ARBITRAGEM
