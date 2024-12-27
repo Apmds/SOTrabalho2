@@ -238,8 +238,8 @@ function main {
 
         testRefereeStartingGame # TESTAR A PASSAGEM PARA O ESTADO S DO REFEREE
         testRefereeing # TESTAR O INÍCIO DA ARBITRAGEM
-        checkFinalResult # TESTAR O FINAL DO JOGO
         testFormingTeam # TESTAR A TRANSIÇÃO PARA O ESTADO F DE PLAYERS/GOALIES
+        checkFinalResult # TESTAR O FINAL DO JOGO
 
         summaryOfTests
 
