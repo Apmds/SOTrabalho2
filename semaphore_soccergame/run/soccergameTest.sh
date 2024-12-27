@@ -2,7 +2,7 @@
 
 # É necessário ter o executado o comando "make all" previamente
 # Argumento opcional com o número de vezes que se pretendem executar os testes
-# Em cado de erro, o ficheiros resultsFile.txt não é apagado
+# Em cado de erro, o ficheiro resultsFile.txt não é apagado
 
 function clean {
     for file in "$@"; do
