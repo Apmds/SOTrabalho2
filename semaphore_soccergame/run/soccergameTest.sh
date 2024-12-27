@@ -233,7 +233,7 @@ function main {
         summaryOfTests
 
 
-        overallPass=$((overallPass + $TOTAL_TESTS - $FAILURE_TESTS))
+        overallPass=$((overallPass + $SUCCESS_TESTS))
         overallFail=$((overallFail + $FAILURE_TESTS))
 
         if [[ "$FAILURE_TESTS" -gt 0 ]]; then
