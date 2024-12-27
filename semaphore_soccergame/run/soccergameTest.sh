@@ -253,7 +253,7 @@ function main {
 
         summaryOfTests
 
-
+        clean "$FILE"
         overallPass=$((overallPass + $SUCCESS_TESTS))
         overallFail=$((overallFail + $FAILURE_TESTS))
 
