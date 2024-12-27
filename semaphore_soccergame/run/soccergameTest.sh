@@ -4,6 +4,21 @@
 # Argumento opcional com o número de vezes que se pretendem executar os testes
 # Em cado de erro, o ficheiro resultsFile.txt não é apagado
 
+
+function parseArgs {
+    if [[ $# -ne 1 ]]; then
+        echo "USAGE: ./soccergameTest.sh <number of runs>"
+        exit 1
+    fi
+    numRuns=1
+    if [[ "$1" =~ ^[0-9]+$ ]]; then
+        numRuns="$1"
+    else
+        echo "ERROR: Invalid number of runs."
+        exit 1
+    fi
+}
+
 function clean {
     for file in "$@"; do
         rm "$file"
@@ -38,13 +53,13 @@ function testRefereeStartingGame {
 
             if [[ "$num_s" -eq 5 && "$num_S" -eq 5 ]]; then
                 echo "OK: Referee is starting the game with:"
-                echo "$num_s players/golies of team 1 waiting start"
-                echo "$num_S players/golies of team 2 waiting start"
+                echo "$num_s players/golies of team 1 waiting start."
+                echo "$num_S players/golies of team 2 waiting start."
                 result 0
             else
                 echo "ERROR: Referee is starting the game with:"
-                echo "$num_s players/golies of team 1 waiting start"
-                echo "$num_S players/golies of team 2 waiting start"
+                echo "$num_s players/golies of team 1 waiting start."
+                echo "$num_S players/golies of team 2 waiting start."
                 result 1
             fi
             break
@@ -80,13 +95,13 @@ function testRefereeing {
 
             if [[ "$num_p" -eq 5 && "$num_P" -eq 5 ]]; then
                 echo "OK: Referee starts refereeing with:"
-                echo "$num_p players/golies of team 1 playing"
-                echo "$num_P players/golies of team 2 playing"
+                echo "$num_p players/golies of team 1 playing."
+                echo "$num_P players/golies of team 2 playing."
                 check=0
             else
                 echo "ERROR: Referee starts refereeing with:"
-                echo "$num_p players/golies of team 1 playing"
-                echo "$num_P players/golies of team 2 playing"
+                echo "$num_p players/golies of team 1 playing."
+                echo "$num_P players/golies of team 2 playing."
                 check=1
             fi
             break
@@ -98,7 +113,7 @@ function testRefereeing {
     if [[ "$count_R" -eq 1 ]]; then
         echo "OK: R appears only once."
     else
-        echo "ERROR: R appears more than once"
+        echo "ERROR: R appears more than once."
     fi
 
     if [[ "$count_R" -eq 1 && "$check" -eq 0 ]]; then
@@ -170,7 +185,7 @@ function checkFinalResult {
 
     
     if [[ ! -s "$FILE" ]]; then
-        echo "Error: resultFile.txt is empty or not generated correctly"
+        echo "Error: resultFile.txt is empty or not generated correctly."
         ((failure++))
         continue
     fi
@@ -179,11 +194,11 @@ function checkFinalResult {
     num_P=$(echo "$lastLine" | grep -o "P" | wc -l) # team 2
     num_E=$(echo "$lastLine" | grep -o "E" | wc -l) # ending game   
     num_L=$(echo "$lastLine" | grep -o "L" | wc -l) # late
-    echo "$num_p players/goalies on team 1"
-    echo "$num_P players/goalies on team 2"
-    echo "$num_L late players/goalies"
+    echo "$num_p players/goalies on team 1."
+    echo "$num_P players/goalies on team 2."
+    echo "$num_L late players/goalies."
     if [[ "$num_E" -eq 1 ]]; then
-        echo "Referee ended the game"
+        echo "Referee ended the game."
     fi
     if [[ "$num_p" -eq 5 && "$num_P" -eq 5 && "$num_E" -eq 1 && "$num_L" -eq 3 ]]; then
         result 0
@@ -207,7 +222,7 @@ function summaryOfTests() {
 
 function main {
 
-    numRuns="$1"
+    parseArgs "$@"
     overallPass=0
     overallFail=0
 
