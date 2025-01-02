@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # É necessário ter o executado o comando "make all" previamente
-# Argumento opcional com o número de vezes que se pretendem executar os testes
+# Argumento com o número de vezes que se pretendem executar os testes
 # Em caso de erro, o ficheiro resultsFile.txt não é apagado
 
 PEOPLE_IN_TEAM=5 # Inclui players e goalies
@@ -12,7 +12,6 @@ function parseArgs {
         echo "USAGE: ./soccergameTest.sh <number of runs>"
         exit 1
     fi
-    numRuns=1
     if [[ "$1" =~ ^[0-9]+$ ]]; then
         numRuns="$1"
     else
