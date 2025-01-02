@@ -42,7 +42,7 @@
 
 void launch_processes(char *bin, char *prefix, int nProc, char *logFilename, int *pids)
 {
-    char idstr[3];
+    char idstr[11];
     char errorFilename[128];
     int p;
     for (p = 0; p < nProc; p++) {           
