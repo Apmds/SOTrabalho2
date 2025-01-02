@@ -4,6 +4,8 @@
 # Argumento opcional com o número de vezes que se pretendem executar os testes
 # Em caso de erro, o ficheiro resultsFile.txt não é apagado
 
+PEOPLE_IN_TEAM=5 # Inclui players e goalies
+TOTAL_PEOPLE=13 # Excluíndo o referee
 
 function parseArgs {
     if [[ $# -ne 1 ]]; then
@@ -51,7 +53,7 @@ function testRefereeStartingGame {
             num_s=$(echo "$previousLine" | grep -o "s" | wc -l)
             num_S=$(echo "$previousLine" | grep -o "S" | wc -l)
 
-            if [[ "$num_s" -eq 5 && "$num_S" -eq 5 ]]; then
+            if [[ "$num_s" -eq "$PEOPLE_IN_TEAM" && "$num_S" -eq "$PEOPLE_IN_TEAM" ]]; then
                 echo "OK: Referee is starting the game with:"
                 echo "$num_s players/golies of team 1 waiting start."
                 echo "$num_S players/golies of team 2 waiting start."
@@ -93,7 +95,7 @@ function testRefereeing {
             num_p=$(echo "$previousLine" | grep -o "p" | wc -l)
             num_P=$(echo "$previousLine" | grep -o "P" | wc -l)
 
-            if [[ "$num_p" -eq 5 && "$num_P" -eq 5 ]]; then
+            if [[ "$num_p" -eq "$PEOPLE_IN_TEAM" && "$num_P" -eq "$PEOPLE_IN_TEAM" ]]; then
                 echo "OK: Referee starts refereeing with:"
                 echo "$num_p players/golies of team 1 playing."
                 echo "$num_P players/golies of team 2 playing."
@@ -156,7 +158,7 @@ function testFormingTeam {
                 ((numTransitions++))
                 # Validar condições para formar a equipa
                 num_W=$(echo "$line" | grep -o "W" | wc -l)
-                if [[ "$num_W" -ge 4 ]]; then
+                if [[ "$num_W" -ge "$((PEOPLE_IN_TEAM-1))" ]]; then
                     echo "OK: Enough players in W to form a team."
                     ((success++))
                 else
@@ -200,7 +202,7 @@ function checkFinalResult {
     if [[ "$num_E" -eq 1 ]]; then
         echo "Referee ended the game."
     fi
-    if [[ "$num_p" -eq 5 && "$num_P" -eq 5 && "$num_E" -eq 1 && "$num_L" -eq 3 ]]; then
+    if [[ "$num_p" -eq "$PEOPLE_IN_TEAM" && "$num_P" -eq "$PEOPLE_IN_TEAM" && "$num_E" -eq 1 && "$num_L" -eq "$((TOTAL_PEOPLE-2*PEOPLE_IN_TEAM))" ]]; then
         result 0
     else
         result 1
